@@ -25,7 +25,7 @@ def quadsieve(n):
     b = 100000
     t = pi(b)
     for i in range(1, t+2):
-
+        pass
 
     return n, n
 
