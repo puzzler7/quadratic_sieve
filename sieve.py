@@ -4,6 +4,7 @@ import sys
 from math import log2, floor, gcd
 
 from primefac import primefac
+from gmpy import mpz
 from Crypto.Util.number import isPrime
 
 def bsmooth(n, b):
@@ -12,7 +13,7 @@ def bsmooth(n, b):
             return False
     return True
 
-def pi(b):
+def pi(b): #1.3x/ln(x)
     ret = 0
     for i in range(2, b):
         ret += isPrime(i)*1 # FIXME improve, need own isPrime?
@@ -24,8 +25,13 @@ def quadsieve(n):
             return i, n//i
     b = 100000
     t = pi(b)
-    for i in range(1, t+2):
-        pass
+    count = 0
+    testnum = mpz(n).root(2)[0]
+    smoothnums = []
+    while count <= t:
+        if bsmooth(testnum, b):
+            smoothnums.append(testnum)
+        testnum += 1
 
     return n, n
 
