@@ -21,6 +21,51 @@ def pi(b): #1.3x/ln(x)
         ret += isPrime(i)*1 # FIXME improve, need own isPrime?
     return ret
 
+def exp(base, exponent, modulus): # Fast exponentiation function using successive squaring
+    toMultiply = base # Number we should multiply by next: Successively square this
+    ans = 1 # Return value
+    z = exponent # Keeps track of binary representation of exponent
+    while (z > 0):
+        digit = z % 2 # Last digit in binary representation of exponent
+        z = z // 2 # Remove last digit from z
+        if (digit == 1):
+            ans = (ans * toMultiply) % modulus
+        toMultiply = (toMultiply * toMultiply) % modulus # Square part of successive square
+    return ans
+
+def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
+    bases = [2, 3, 5] # Bases to use Miller-Rabin with
+    if not isinstance(n, int): # Handle edge cases ...
+        return False
+    if n in [2, 3, 5, 7]:
+        return True
+    if n <= 10:
+        return False
+    if n % 2 == 0:
+        return False
+    m = n - 1
+    k = 0
+    while m % 2 == 0:
+        m = m // 2
+        k = k + 1
+    # Now note that n - 1 = 2^k * m, with m odd
+    for a in bases:
+        x = exp(a, m, n)  # Sets x to a^m mod n
+        if x in [n - 1, 1]:
+            return True
+        iterations = 0
+        while iterations <= k - 1:
+            x = (x * x) % n
+            if x == 1:
+                return False
+            if x == n - 1:
+                break
+            iterations = iterations + 1
+        if x != n - 1:
+            return False
+    return True  # Passed three rounds of Miller-Rabin
+
+
 def quadsieve(n):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
