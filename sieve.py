@@ -21,18 +21,6 @@ def pi(b): #1.3x/ln(x)
         ret += isPrime(i)*1 # FIXME improve, need own isPrime?
     return ret
 
-def exp(base, exponent, modulus): # Fast exponentiation function using successive squaring
-    toMultiply = base # Number we should multiply by next: Successively square this
-    ans = 1 # Return value
-    z = exponent # Keeps track of binary representation of exponent
-    while (z > 0):
-        digit = z % 2 # Last digit in binary representation of exponent
-        z = z // 2 # Remove last digit from z
-        if (digit == 1):
-            ans = (ans * toMultiply) % modulus
-        toMultiply = (toMultiply * toMultiply) % modulus # Square part of successive square
-    return ans
-
 def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
     bases = [2, 3, 5] # Bases to use Miller-Rabin with
     if not isinstance(n, int): # Handle edge cases ...
@@ -50,7 +38,7 @@ def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
         k = k + 1
     # Now note that n - 1 = 2^k * m, with m odd
     for a in bases:
-        x = exp(a, m, n)  # Sets x to a^m mod n
+        x = pow(a, m, n)  # Sets x to a^m mod n
         if x in [n - 1, 1]:
             return True
         iterations = 0
@@ -65,12 +53,11 @@ def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
             return False
     return True  # Passed three rounds of Miller-Rabin
 
-
 def quadsieve(n):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
-    b = 10000
+    b = 100
     t = pi(b)
     print("pi(b):", t)
     count = 0
@@ -104,7 +91,7 @@ def quadsieve(n):
         mat.SetRow(rowcount, newrow)
         rowcount += 1
     b = [0]*numnums
-    x = mat.LowerGaussianElim()
+    x = Solve(mat, b)
     print(x)
 
 
@@ -117,10 +104,11 @@ if __name__ == '__main__':
             n = int(input("Enter a product of two primes: "))
             ret = quadsieve(n)
         else:
-            ret = quadsieve(int(args[1]))
+            n = int(args[1])
+            ret = quadsieve(n)
     except ValueError as e:
         print("Bad int!")
-        print(e)
+        raise e
 
-    assert ret[0]*ret[1] == n
+    # assert ret[0]*ret[1] == n
     print("The factors are %d and %d."%ret)
