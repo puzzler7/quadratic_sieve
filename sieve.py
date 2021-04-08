@@ -2,7 +2,7 @@
 
 import sys
 from math import log2, log, floor, ceil, gcd
-from gauss import gauss_jordan
+import time
 
 from primefac import primefac # pip install git+git://github.com/elliptic-shiho/primefac-fork@master
 from gmpy import mpz # pip install gmpy
@@ -90,7 +90,17 @@ def quadsieve(n):
         if q == 1:
             fac -= .5
 
+def timeElapsed(t):
+    diff = time.time()-t
+    h = int(diff)//3600
+    m = int(diff-3600*h)//60
+    s = round(diff%60, 3)
+    print("\tTime elapsed: %dh %dm %0.3fs\n"%(h,m,s))
+    return time.time()
+
 def quadsieveloop(n, fac):
+    timevar = time.time()
+    looptime = timevar
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
@@ -115,6 +125,7 @@ def quadsieveloop(n, fac):
         testnum += 1
 
     print("found bsmooth numbers")
+    timevar = timeElapsed(timevar)
 
     smallprimes = sorted(list(smallprimes))
     rowlen = len(smallprimes)
@@ -130,32 +141,33 @@ def quadsieveloop(n, fac):
                                        # but that might mean we'll be doing some unnecessary computation...
         newrow = np.zeros(rowlen)
 
-        for f in set(factor): # this is the bad loop, I think
+        for f in set(factor): 
             newrow[smallprimes.index(f)] = factor.count(f)%2
 
         mat = np.append(mat, [newrow], axis=0)
 
     mat = mat[1:]
     print("done factoring loop")
+    timevar = timeElapsed(timevar)
     mat = mat.transpose()
     height = len(mat)
     # print(smallprimes)
     # print(cong)
 
-    # add identity to bottom of matrix
-    for i in range(len(mat[0])):
-        mat = np.append(mat, np.array([[(j==i)*1 for j in range(len(mat[0]))]]), axis=0)
+    mat = np.append(mat, np.identity(len(mat[0])), axis=0)
 
     print("doing gaussian reduction")
     # pr(mat)
     p, l, u = lu(mat)
     print("solved")
+    timevar = timeElapsed(timevar)
     pr(l)
     print()
     pr(u)
 
     mat = l.transpose()
 
+    print("finding basis")
     basis = []
     for row in mat[::-1]:
         if sum([int(i)%2 for i in row[:height]]) == 0:
@@ -164,6 +176,7 @@ def quadsieveloop(n, fac):
     print() 
     pr(basis)
     print("basis found")
+    timevar = timeElapsed(timevar)
 
     # basis is now basis for the kernel (I think?)
     # too tired to keep going, but the hard part should be done
@@ -189,6 +202,9 @@ def quadsieveloop(n, fac):
     # assert pow(smoothsq, 2, n) == pow(congsq, 2, n)
 
     factor = gcd(abs(smoothsq-congsq), n)
+
+    print("loop finished")
+    timeElapsed(looptime)
 
     return factor, n//factor
 
