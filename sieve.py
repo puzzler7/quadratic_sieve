@@ -6,12 +6,25 @@ from gauss import gauss_jordan
 
 from primefac import primefac # pip install git+git://github.com/elliptic-shiho/primefac-fork@master
 from gmpy import mpz # pip install gmpy
-import numpy as np
-from scipy.linalg import lu
+import numpy as np # pip install numpy
+from scipy.linalg import lu # pip install scipy
 
 DEBUG = 0
 
-def bsmooth(n, b):
+primeMemo = {}
+
+def primefacMemo(n):
+    global primeMemo
+    if n in primeMemo.keys():
+        for i in primeMemo[n]:
+            yield i
+    else:
+        primeMemo[n] = []
+        for i in primefac(n):
+            primeMemo[n].append(i)
+            yield i
+
+def bsmooth(n, b): # can this primefac be memoized? don't think so, but it should be fine here
     for i in primefac(n): # FIXME need to write own primefac
         if i > b:
             # print(i)
@@ -97,7 +110,7 @@ def quadsieveloop(n, fac):
         if bsmooth(testnum, b):
             smoothnums.append(testnum)
             cong[testnum] = testnum**2 - n
-            smallprimes = smallprimes.union(set(primefac(testnum)))
+            smallprimes = smallprimes.union(set(primefacMemo(testnum)))
             count += 1
         testnum += 1
 
@@ -109,20 +122,25 @@ def quadsieveloop(n, fac):
     print((numnums,rowlen))
 
     print("factoring numbers")
-    mat = []
+
+    mat = np.array([np.zeros(rowlen)])
     for i in smoothnums:
         # print(i)
-        factor = list(primefac(i))
-        newrow = []
-        for p in smallprimes:
-            newrow.append(factor.count(p)%2)
-        mat.append(newrow)
-    mat = np.array(mat)
+        factor = list(primefacMemo(i)) # we can probably do row generation in the last loop
+                                       # but that might mean we'll be doing some unnecessary computation...
+        newrow = np.zeros(rowlen)
+
+        for f in set(factor): # this is the bad loop, I think
+            newrow[smallprimes.index(f)] = factor.count(f)%2
+
+        mat = np.append(mat, [newrow], axis=0)
+
+    mat = mat[1:]
+    print("done factoring loop")
     mat = mat.transpose()
     height = len(mat)
     # print(smallprimes)
     # print(cong)
-    pr(mat)
 
     # add identity to bottom of matrix
     for i in range(len(mat[0])):
