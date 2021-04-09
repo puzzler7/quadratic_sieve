@@ -104,8 +104,8 @@ def quadsieveloop(n, fac):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
-    b = intSqrt(n)
-    t = int(pi(b)*fac)
+    b = intSqrt(n)*fac
+    t = int(pi(b))
     print("pi(b):", t)
     count = 0
     testnum = intSqrt(n)
