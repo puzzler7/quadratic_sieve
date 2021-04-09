@@ -43,8 +43,11 @@ def pr(mat):
         for row in mat:
             print(list([int(i)%2 for i in row]))
 
+def intnroot(n, r):
+    return int(mpz(n).root(r)[0])
+
 def intSqrt(n): #uses lib fn rn, should change?
-    return int(mpz(n).root(2)[0])
+    return intnroot(n, 2)
 
 def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
     bases = [2, 3, 5] # Bases to use Miller-Rabin with
@@ -104,7 +107,7 @@ def quadsieveloop(n, fac):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
-    b = intSqrt(n)*fac
+    b = intnroot(n, 3)*fac
     t = int(pi(b))
     print("pi(b):", t)
     count = 0
@@ -182,26 +185,31 @@ def quadsieveloop(n, fac):
     # too tired to keep going, but the hard part should be done
     # just need to actually do the calculation (congruence) on the primes now
 
-    primesToUse = basis[0]
+    print("evaluating congruences")
+    basisSum = basis[0]
     for row in basis[1:]:
-        primesToUse += row
+        basisSum += row
 
-    primesToUse = [int(i)%2 for i in primesToUse]
-    primesToUse = [smoothnums[i] for i, test in enumerate(primesToUse) if test]
+        primesToUse = [int(i)%2 for i in basisSum]
+        primesToUse = [smoothnums[i] for i, test in enumerate(primesToUse) if test]
 
-    # print(primesToUse)
+        # print(primesToUse)
 
-    smoothsq = 1
-    congsq = 1
-    for i in primesToUse:
-        smoothsq *= i
-        congsq *= cong[i]
+        smoothsq = 1
+        congsq = 1
+        for i in primesToUse:
+            smoothsq *= i
+            congsq *= cong[i]
 
-    # print(smoothsq)
-    # print(congsq)
-    # assert pow(smoothsq, 2, n) == pow(congsq, 2, n)
+        # print(smoothsq)
+        # print(congsq)
+        # assert pow(smoothsq, 2, n) == pow(congsq, 2, n)
 
-    factor = gcd(abs(smoothsq-congsq), n)
+        factor = gcd(abs(smoothsq-congsq), n)
+        if factor != 1 and factor != n:
+            break
+    print("done evaluating congruences")
+    timevar = timeElapsed(timevar)
 
     print("loop finished")
     timeElapsed(looptime)
