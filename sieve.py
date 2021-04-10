@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from math import log2, log, floor, ceil, gcd
+from math import log10, log2, log, floor, ceil, gcd
 import time
 
 from primefac import primefac # pip install git+git://github.com/elliptic-shiho/primefac-fork@master
@@ -12,6 +12,8 @@ from scipy.linalg import lu # pip install scipy
 DEBUG = 0
 
 primeMemo = {}
+primeSets = {}
+primeCounts = {}
 
 def primefacMemo(n):
     global primeMemo
@@ -20,8 +22,15 @@ def primefacMemo(n):
             yield i
     else:
         primeMemo[n] = []
+        primeSets[n] = set([])
+        primeCounts[n] = {}
         for i in primefac(n):
             primeMemo[n].append(i)
+            primeSets[n].add(i)
+            if i in primeCounts[n]:
+                primeCounts[n][i] += 1
+            else:
+                primeCounts[n][i] = 1
             yield i
 
 def bsmooth(n, b): # can this primefac be memoized? don't think so, but it should be fine here
@@ -31,8 +40,8 @@ def bsmooth(n, b): # can this primefac be memoized? don't think so, but it shoul
             return False
     return True
 
-def pi(b): #1.3x/ln(x)
-    return ceil(2*b/log(b)) # approximation
+def pi(b): #x/(ln(x)-1)
+    return ceil(b/(log10(b))) # approximation
     ret = 0
     for i in range(2, b):
         ret += millerPrimeTest(i)*1 # FIXME improve, need own isPrime?
@@ -108,7 +117,7 @@ def quadsieveloop(n, fac):
         if n % i == 0:
             return i, n//i
     b = intnroot(n, 3)*fac
-    t = int(pi(b))
+    t = int(pi(b)/2)
     print("pi(b):", t)
     count = 0
     testnum = intSqrt(n)
@@ -130,26 +139,37 @@ def quadsieveloop(n, fac):
     print("found bsmooth numbers")
     timevar = timeElapsed(timevar)
 
+    print("indexing small primes")
+
     smallprimes = sorted(list(smallprimes))
+    primeIndices = {}
+    for i, p in enumerate(smallprimes):
+        primeIndices[p] = i
     rowlen = len(smallprimes)
     numnums = len(smoothnums)
     print((numnums,rowlen))
 
+    print("indexed small primes")
+    timevar = timeElapsed(timevar)
+
     print("factoring numbers")
 
-    mat = np.array([np.zeros(rowlen)])
+    mat = []
+    iters = 0
     for i in smoothnums:
-        # print(i)
-        factor = list(primefacMemo(i)) # we can probably do row generation in the last loop
-                                       # but that might mean we'll be doing some unnecessary computation...
-        newrow = np.zeros(rowlen)
+        # we can probably do row generation in the last loop
+        # but that might mean we'll be doing some unnecessary computation...
+        newrow = [0]*rowlen
 
-        for f in set(factor): 
-            newrow[smallprimes.index(f)] = factor.count(f)%2
+        for f in primeSets[i]: 
+            newrow[primeIndices[f]] = primeCounts[i][f]%2
+            iters += 1
 
-        mat = np.append(mat, [newrow], axis=0)
+        mat.append(newrow)
 
-    mat = mat[1:]
+    mat = np.array(mat)
+    print("iters run:", iters)
+    print("elements:", numnums*rowlen)
     print("done factoring loop")
     timevar = timeElapsed(timevar)
     mat = mat.transpose()
@@ -179,6 +199,10 @@ def quadsieveloop(n, fac):
     print() 
     pr(basis)
     print("basis found")
+
+    if len(basis) == 0:
+        print("empty basis")
+        return 1, n
     timevar = timeElapsed(timevar)
 
     # basis is now basis for the kernel (I think?)
@@ -187,11 +211,10 @@ def quadsieveloop(n, fac):
 
     print("evaluating congruences")
     basisSum = basis[0]
-    for row in basis[1:]:
-        basisSum += row
+    for row in basis[:]:
+        basisSum = row
 
-        primesToUse = [int(i)%2 for i in basisSum]
-        primesToUse = [smoothnums[i] for i, test in enumerate(primesToUse) if test]
+        primesToUse = [smoothnums[i] for i, test in enumerate(basisSum) if int(test)%2]
 
         # print(primesToUse)
 
@@ -208,6 +231,7 @@ def quadsieveloop(n, fac):
         factor = gcd(abs(smoothsq-congsq), n)
         if factor != 1 and factor != n:
             break
+
     print("done evaluating congruences")
     timevar = timeElapsed(timevar)
 
