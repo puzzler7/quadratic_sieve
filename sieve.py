@@ -41,7 +41,7 @@ def bsmooth(n, b): # can this primefac be memoized? don't think so, but it shoul
     return True
 
 def pi(b): #x/(ln(x)-1)
-    return ceil(b/(log10(b))) # approximation
+    return ceil(b/(log(b, 2))) # approximation
     ret = 0
     for i in range(2, b):
         ret += millerPrimeTest(i)*1 # FIXME improve, need own isPrime?
@@ -116,7 +116,7 @@ def quadsieveloop(n, fac):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
-    b = intnroot(n, 3)*fac
+    b = intnroot(n, 2)*fac
     t = int(pi(b)/2)
     print("pi(b):", t)
     count = 0
