@@ -3,7 +3,9 @@
 import sys
 from math import log10, log2, log, floor, ceil, gcd
 import time
+from sparse import *
 
+# library stuff
 from primefac import primefac # pip install git+git://github.com/elliptic-shiho/primefac-fork@master
 from gmpy import mpz # pip install gmpy
 import numpy as np # pip install numpy
@@ -117,7 +119,7 @@ def quadsieveloop(n, fac):
         if n % i == 0:
             return i, n//i
     b = intnroot(n, 2)*fac
-    t = int(pi(b)/2)
+    t = int(pi(b)/2) # divide by 4?
     print("pi(b):", t)
     count = 0
     testnum = intSqrt(n)
@@ -154,33 +156,36 @@ def quadsieveloop(n, fac):
 
     print("factoring numbers")
 
-    mat = []
+    mat = SparseMatrix(numnums, rowlen)
     iters = 0
-    for i in smoothnums:
+    for i, num in enumerate(smoothnums):
         # we can probably do row generation in the last loop
         # but that might mean we'll be doing some unnecessary computation...
-        newrow = [0]*rowlen
 
-        for f in primeSets[i]: 
-            newrow[primeIndices[f]] = primeCounts[i][f]%2
+        for f in primeSets[num]: 
+            mat.add(i, primeIndices[f], primeCounts[num][f]%2)
             iters += 1
 
-        mat.append(newrow)
 
-    mat = np.array(mat)
     print("iters run:", iters)
     print("elements:", numnums*rowlen)
     print("done factoring loop")
     timevar = timeElapsed(timevar)
-    mat = mat.transpose()
-    height = len(mat)
+
+    print("transposing and adding identity")
+    height = mat.cols
+    mat.transpose()
+    mat.add_identity()
     # print(smallprimes)
     # print(cong)
 
-    mat = np.append(mat, np.identity(len(mat[0])), axis=0)
+    # mat = np.append(mat, np.identity(len(mat[0])), axis=0)
 
+    print("done prepping for reduction")
+    timevar = timeElapsed(timevar)
     print("doing gaussian reduction")
     # pr(mat)
+    mat = mat.to_array()
     p, l, u = lu(mat)
     print("solved")
     timevar = timeElapsed(timevar)
