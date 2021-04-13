@@ -288,7 +288,7 @@ def quadsieveloop(n, fac):
 
     sq = intSqrt(n)+1
     y = lambda x: (x+sq)**2 - n
-    vlen = int(t*t*intSqrt(t))
+    vlen = int(t*t*intSqrt(t)*1.2)
     print("v len is", vlen)
 
     fb = [2]

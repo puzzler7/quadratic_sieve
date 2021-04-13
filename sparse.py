@@ -112,7 +112,7 @@ class SparseMatrix:
     def reduce(self):
         if self.rows < self.cols:
             print("Matrix size (%d, %d) bad for reducing!"%(self.rows, self.cols))
-        print(self)
+        # print(self)
         self.marked = {}
         self.marks = {}
         for j in range(self.cols):
