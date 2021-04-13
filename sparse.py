@@ -8,15 +8,19 @@ class SparseMatrix:
         self.cols = c
 
     def add(self, x, y, val):
+        if x >= self.rows:
+            self.rows = x+1
+        if y >= self.cols:
+            self.cols = y+1
         if x  not in self.pointsx:
             self.pointsx[x] = {}
         if y not in self.pointsy:
             self.pointsy[y] = {}
         self.pointsx[x][y] = val
         self.pointsy[y][x] = val
-        if val == 0:
-            del self.pointsx[x][y]
-            del self.pointsy[y][x]
+        # if val == 0:
+        #     del self.pointsx[x][y]
+        #     del self.pointsy[y][x]
 
     def get(self, x, y):
         try:
@@ -98,13 +102,17 @@ class SparseMatrix:
             self.add(x, to, (self.get(x, fr)+self.get(x, to))%2)
 
     def find_pivot(self, j):
+        if j not in self.pointsy:
+            return -1
         for x in self.pointsy[j]:
             if self.get(x, j) and x not in self.marked:
                 return x
         return -1
 
     def reduce(self):
-        assert self.rows >= self.cols
+        if self.rows < self.cols:
+            print("Matrix size (%d, %d) bad for reducing!"%(self.rows, self.cols))
+        print(self)
         self.marked = {}
         self.marks = {}
         for j in range(self.cols):

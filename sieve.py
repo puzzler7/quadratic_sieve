@@ -183,6 +183,47 @@ def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
             return False
     return True  # Passed three rounds of Miller-Rabin
 
+def legendre(a, p):
+    ret = pow(a, (p-1)//2, p)
+    return -1 if ret == p-1 else ret
+
+def sqrtModP(n, p):
+    q = p-1
+    s = 0
+    while q%2 == 0:
+        q //= 2
+        s += 1
+    z = 1
+    # quadres = []
+    # for i in range(1, ((p-1)//2+1)):
+    #     quadres.append(pow(i, 2, p))
+    # while z in quadres:
+    while legendre(z, p) != -1:
+        z += 1
+    assert z != p
+    m = s
+    c = pow(z, q, p)
+    t = pow(n, q, p)
+    r = pow(n, (q+1)//2, p)
+    while True:
+        if t == 0:
+            return 0, 0
+        if t == 1:
+            return r, p-r
+        i = 0
+        temp = t
+        while temp != 1:
+            temp = pow(temp, 2, p)
+            i += 1
+        if m == i:
+            return 0,0
+        b = pow(c, pow(2, m-i-1), p)
+        m = i
+        c = pow(b, 2, p)
+        t = (t*c) % p
+        r = (r*b) % p
+
+
 def quadsieve(n):
     global primeNumbers
     primetime = time.time()
@@ -207,7 +248,11 @@ def timeElapsed(t):
     print("\tTime elapsed: %dh %dm %0.3fs\n"%(h,m,s))
     return time.time()
 
+smoothnums = []
+cong = {}
+
 def quadsieveloop(n, fac):
+    global smoothnums, cong
     timevar = time.time()
     looptime = timevar
     for i in range(2, floor(log2(n))):
@@ -225,24 +270,84 @@ def quadsieveloop(n, fac):
     if testnum**2 == n:
         return testnum, testnum
     testnum += 1
-    smoothnums = []
-    smallprimes = set([])
-    cong = {}
+    
     print("finding %d bsmooth numbers"%t)
-    thousandtime = time.time()
-    while count <= t:
-        sq = pow(testnum, 2, n)
-        if bsmooth(sq, b):
-            smoothnums.append(sq)
-            cong[sq] = testnum
-            smallprimes = smallprimes.union(set(primefacMemo(sq)))
-            count += 1
-            if count %100 == 0:
-                print(count, "bsmooth nums found")
-                thousandtime = timeElapsed(thousandtime)
-        testnum += 1
-    print(sq)
-        
+    # thousandtime = time.time()
+    # while count <= t:
+    #     sq = pow(testnum, 2, n)
+    #     if bsmooth(sq, b):
+    #         smoothnums.append(sq)
+    #         cong[sq] = testnum
+    #         smallprimes = smallprimes.union(set(primefacMemo(sq)))
+    #         count += 1
+    #         if count %100 == 0:
+    #             print(count, "bsmooth nums found")
+    #             thousandtime = timeElapsed(thousandtime)
+    #     testnum += 1
+    # print(sq)
+
+    sq = intSqrt(n)+1
+    y = lambda x: (x+sq)**2 - n
+    vlen = int(t*t*intSqrt(t))
+    print("v len is", vlen)
+
+    fb = [2]
+    idx = 1
+    while len(fb) < t:
+        p = primeNumbers[idx]
+        if legendre(n, p) == 1:
+            fb.append(p)
+        idx += 1
+    # print("factor base", fb)
+
+    V = [y(x) for x in range(vlen)]
+    if V[0]%2 == 0:
+        for i in range(0, vlen, 2):
+            assert V[i] %2 == 0
+            V[i] //= 2
+    else:
+        for i in range(1, vlen, 2):
+            assert V[i] %2 == 0
+            V[i] //= 2
+    for i in range(1, t):
+        p = fb[i]
+        # print("running sieve mod", p)
+        r1, r2 = sqrtModP(n, p)
+        if r1 == 0:
+            print("sqrt is 0")
+            continue
+        # print("found sqrt of %d mod %d"%(n, p))
+        # print(r1, r2)
+        if pow(r1, 2, p)!=n%p or pow(r2, 2, p)!=n%p:
+            print("not actually root?", r1, r2)
+            continue
+        r1 = (r1 - sq) % p
+        r2 = (r2 - sq) % p
+
+        for idx in range(r1, vlen, p):
+            try:
+                assert V[idx] %p == 0
+                V[idx] //= p
+            except IndexError as e:
+                print("bad index")
+        if p != 2:
+            for idx in range(r2, vlen, p):
+                assert V[idx] %p == 0
+                V[idx] //= p
+        if i % 100 == 0:
+            print("through %d bases"%i)
+    smallprimes = fb
+    for i, test in enumerate(V):
+        if test == 1 or test == 0:
+            num = y(i)
+            if num in smoothnums:
+                continue
+            smoothnums.append(num)
+            cong[num] = sq+i
+            list(primefacMemo(num)) # calculating for later
+            # smallprimes = smallprimes.union(set(primefacMemo(num)))
+    # print(smoothnums)
+
 
     print("found bsmooth numbers")
     timevar = timeElapsed(timevar)
@@ -268,9 +373,13 @@ def quadsieveloop(n, fac):
         # we can probably do row generation in the last loop
         # but that might mean we'll be doing some unnecessary computation...
 
-        for f in primeSets[num]: 
-            mat.add(i, primeIndices[f], primeCounts[num][f]%2)
-            iters += 1
+        for f in primeSets[num]:
+            try:
+                mat.add(i, primeIndices[f], primeCounts[num][f]%2)
+                iters += 1
+            except KeyError as e:
+                print("bad prime", f)
+                continue
 
 
     print("iters run:", iters)
