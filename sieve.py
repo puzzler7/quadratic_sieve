@@ -263,7 +263,7 @@ def quadsieveloop(n, fac):
     o = .15
     b = int(exp((2**(-.5)+o)*((log(x)*log(log(x)))**.5)))
     print("b =", b)
-    t = int(fac*int(pi(b)))
+    t = int(fac*int(pi(b))/2)
     print("pi(b):", t)
     count = 0
     testnum = intSqrt(n)
@@ -288,7 +288,7 @@ def quadsieveloop(n, fac):
 
     sq = intSqrt(n)+1
     y = lambda x: (x+sq)**2 - n
-    vlen = int(t*t*intSqrt(t)*1.2)
+    vlen = int(t*t*intSqrt(t)*4)
     print("v len is", vlen)
 
     fb = [2]
@@ -388,9 +388,9 @@ def quadsieveloop(n, fac):
     timevar = timeElapsed(timevar)
 
     print("doing gaussian reduction")
-    pr(mat.to_array())
+    # pr(mat.to_array())
     congruences = mat.get_congruences()
-    pr(mat.to_array())
+    # pr(mat.to_array())
     # print(congruences)
 
     timevar = timeElapsed(timevar)
