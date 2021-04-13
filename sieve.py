@@ -6,8 +6,6 @@ import time
 from sparse import *
 
 # library stuff
-from primefac import primefac # pip install git+git://github.com/elliptic-shiho/primefac-fork@master
-from gmpy import mpz # pip install gmpy
 import numpy as np # pip install numpy
 from scipy.linalg import lu # pip install scipy
 
@@ -35,6 +33,27 @@ def primefacMemo(n):
                 primeCounts[n][i] = 1
             yield i
 
+def primefac(n, i=3):
+    if n%2 == 0:
+        yield 2
+        for p in primefac(n//2):
+            yield p
+        return
+    i = 3
+    while True:
+        if i > intnroot(n, 2):
+            yield n
+            return
+        if n%i == 0:
+            yield i
+            if n//i == 1:
+                return
+            for p in primefac(n//i, i):
+                yield p
+            return
+        i += 2
+
+
 def bsmooth(n, b): # can this primefac be memoized? don't think so, but it should be fine here
     for i in primefac(n): # FIXME need to write own primefac
         if i > b:
@@ -55,7 +74,8 @@ def pr(mat):
             print(list([int(i)%2 for i in row]))
 
 def intnroot(n, r):
-    return int(mpz(n).root(r)[0])
+    return int(n**(1/r))
+    # return int(mpz(n).root(r)[0]) # uses mpz library
 
 def intSqrt(n): #uses lib fn rn, should change?
     return intnroot(n, 2)
@@ -174,8 +194,8 @@ def quadsieveloop(n, fac):
 
     print("transposing and adding identity")
     height = mat.cols
-    mat.transpose()
-    mat.add_identity()
+    mat = mat.transpose()
+    mat = mat.add_identity()
     # print(smallprimes)
     # print(cong)
 
