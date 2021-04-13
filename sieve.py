@@ -1,14 +1,9 @@
 #!/usr/bin/env python3
 
 import sys
-from math import log10, log2, log, floor, ceil, gcd, exp
+from math import log10, log2, log, floor, ceil, gcd, exp, isqrt
 import time
-from itertools import product
 from sparse import *
-
-# library stuff
-import numpy as np # pip install numpy
-from scipy.linalg import lu # pip install scipy
 
 DEBUG = 0
 
@@ -105,26 +100,9 @@ def intSqrt(n):
     global sqrts
     if n in sqrts:
         return sqrts[n]
-    bot = 1
-    top = n//2
-    last = -1
-    while True:
-        val = (bot+top)//2
-        sq = val**2
-        if sq == n:
-            sqrts[n] = val
-            return val
-        if sq < n:
-            bot = val
-        if sq > n:
-            top = val
-        if last == val:
-            if (val+1)**2 == n:
-                sqrts[n] = val+1
-                return val+1
-            sqrts[n] = val
-            return val
-        last = val
+    ret = isqrt(n)
+    sqrts[n] = ret
+    return ret
 
 def millerPrimeTest(n): # Uses Miller-Rabin three times to test primality.
     bases = [2, 3, 5] # Bases to use Miller-Rabin with
