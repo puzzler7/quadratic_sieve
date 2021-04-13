@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
-from math import log10, log2, log, floor, ceil, gcd
+from math import log10, log2, log, floor, ceil, gcd, exp
 import time
 from sparse import *
 
@@ -33,10 +33,10 @@ def primefacMemo(n):
                 primeCounts[n][i] = 1
             yield i
 
-def primefac(n, i=3):
+def primefac(n, i=3, b=999999999999999999999999):
     if n%2 == 0:
         yield 2
-        for p in primefac(n//2):
+        for p in primefac(n//2, 2, b):
             yield p
         return
     i = 3
@@ -44,18 +44,21 @@ def primefac(n, i=3):
         if i > intnroot(n, 2):
             yield n
             return
+        if i > b: #stop when reaching bsmooth limit
+            yield b
+            return
         if n%i == 0:
             yield i
             if n//i == 1:
                 return
-            for p in primefac(n//i, i):
+            for p in primefac(n//i, i, b):
                 yield p
             return
         i += 2
 
 
 def bsmooth(n, b): # can this primefac be memoized? don't think so, but it should be fine here
-    for i in primefac(n): # FIXME need to write own primefac
+    for i in primefac(n, b=b): # FIXME need to write own primefac
         if i > b:
             # print(i)
             return False
@@ -119,10 +122,7 @@ def quadsieve(n):
         p, q = quadsieveloop(n, fac)
         if p != 1 and q != 1:
             return p, q
-        if p == 1:
-            fac += 1
-        if q == 1:
-            fac -= .5
+        fac += 1
 
 def timeElapsed(t):
     diff = time.time()-t
@@ -138,7 +138,10 @@ def quadsieveloop(n, fac):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
-    b = intnroot(n, 2)*fac
+    eps = 0
+    x = 2*int(n**(.5+eps))
+    o = .5
+    b = fac*exp((2**.5+o)*((log(x)*log(log(x)))**.5))
     t = int(pi(b)/2) # divide by 4?
     print("pi(b):", t)
     count = 0
