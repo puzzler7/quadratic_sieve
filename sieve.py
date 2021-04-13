@@ -140,9 +140,9 @@ def quadsieveloop(n, fac):
             return i, n//i
     eps = 0
     x = 2*int(n**(.5+eps))
-    o = .5
-    b = fac*exp((2**.5+o)*((log(x)*log(log(x)))**.5))
-    t = int(pi(b)/2) # divide by 4?
+    o = .15
+    b = exp((2**.5+o)*((log(x)*log(log(x)))**.5))
+    t = fac*int(pi(b)) # divide by 4?
     print("pi(b):", t)
     count = 0
     testnum = intSqrt(n)

@@ -8,14 +8,15 @@ class SparseMatrix:
         self.cols = c
 
     def add(self, x, y, val):
-        if val == 0:
-            return
         if x  not in self.pointsx:
             self.pointsx[x] = {}
         if y not in self.pointsy:
             self.pointsy[y] = {}
         self.pointsx[x][y] = val
         self.pointsy[y][x] = val
+        if val == 0:
+            del self.pointsx[x][y]
+            del self.pointsy[y][x]
 
     def get(self, x, y):
         try:
@@ -52,7 +53,7 @@ class SparseMatrix:
         ret = SparseMatrix(self.rows, other.cols)
         for i in range(self.rows):
             for j in range(other.cols):
-                if i not in self.pointsx or j not in self.pointsy:
+                if i not in self.pointsx or j not in other.pointsy:
                     continue
                 v = 0
                 for k in range(self.cols):
@@ -88,7 +89,7 @@ class SparseMatrix:
     def eq0(self):
         for x in self.pointsx:
             for y in self.pointsx[x]:
-                if abs(self.get(x, y)) > 1e-20:
+                if abs(self.get(x, y)) > 1e-10:
                     return False
         return True
 
@@ -104,6 +105,32 @@ if __name__ == "__main__":
 
     for i in range(9):
         b.add(i//3, i%3, i+1)
-    print(a.multiply(b).to_array())
-    print(b.multiply(a).to_array())
+    # print(a.multiply(b).to_array())
+    # print(b.multiply(a).to_array())
+    # print(a.add_mat(b).to_array())
+    # print(b.add_mat(a).to_array())
+    # print(a.sub_mat(b).to_array())
+    # print(b.sub_mat(a).to_array())
+    # print(b.multiply(b).to_array())
+    # print(b.scale(-5).to_array())
+    # print(b.transpose().to_array())
+
+    c = SparseMatrix(1, 3)
+    d = SparseMatrix(3, 1)
+
+    for i in range(3):
+        c.add(0, i, i+1)
+        d.add(i, 0, i+1)
+
+    print(c.to_array())
+    print(d.to_array())
+    print(c.multiply(d).to_array())
+    print(c.multiply(c.transpose()).to_array())
+    print()
+    print(d.multiply(c).to_array())
+    print(d.multiply(d.transpose()).to_array())
+    print(c.transpose().transpose().to_array())
+    print(c.transpose().multiply(c).to_array())
+
+
 
