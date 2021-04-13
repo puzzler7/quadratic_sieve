@@ -93,8 +93,51 @@ class SparseMatrix:
                     return False
         return True
 
+    def add_col(self, fr, to):
+        for x in self.pointsy[fr]:
+            self.add(x, to, (self.get(x, fr)+self.get(x, to))%2)
+
+    def find_pivot(self, j):
+        for x in self.pointsy[j]:
+            if self.get(x, j) and x not in self.marked:
+                return x
+        return -1
+
+    def reduce(self):
+        assert self.rows >= self.cols
+        self.marked = []
+        self.marks = {}
+        for j in range(self.cols):
+            i = self.find_pivot(j)
+            if i == -1:
+                continue
+            self.marked.append(i)
+            self.marks[j] = i
+            for k in range(self.cols):
+                if j != k and self.get(i, k) == 1:
+                    self.add_col(j, k)
+
+    def get_congruences(self):
+        valid = self.reduce()
+        if valid == -1:
+            print("Invalid matrix for reducing!")
+            return []
+        ret = []
+        for i in range(self.rows):
+            cong = [i]
+            if i in self.marked:
+                continue
+            if i not in self.pointsx:
+                continue
+            for y in self.pointsx[i]:
+                if self.get(i, y):
+                    cong.append(self.marks[y])
+            if len(cong) > 1:
+                ret.append(cong)
+        return ret
+
     def __str__(self):
-        return str(self.pointsx) 
+        return str(self.to_array())
 
 if __name__ == "__main__":
     a = SparseMatrix(3, 3)
