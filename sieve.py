@@ -3,6 +3,7 @@
 import sys
 from math import log10, log2, log, floor, ceil, gcd, exp, isqrt
 import time
+import random
 from sparse import *
 
 DEBUG = 0
@@ -11,10 +12,10 @@ primeMemo = {}
 primeSets = {}
 primeCounts = {}
 
-primeNumbers = []
+primeNumbers = [3]
 maxPrime = 3
 
-def primefacMemo(n, b=99999999999999999999999):
+def primefacMemo(n, start=3, b=999999999999999999999999, idx=len(primeNumbers)):
     global primeMemo
     if n in primeMemo.keys():
         for i in primeMemo[n]:
@@ -23,7 +24,7 @@ def primefacMemo(n, b=99999999999999999999999):
         primeMemo[n] = []
         primeSets[n] = set([])
         primeCounts[n] = {}
-        for i in primefac(n, b=b):
+        for i in primefac(n, start=start, b=b, idx=idx):
             primeMemo[n].append(i)
             primeSets[n].add(i)
             if i in primeCounts[n]:
@@ -32,6 +33,44 @@ def primefacMemo(n, b=99999999999999999999999):
                 primeCounts[n][i] = 1
             yield i
 
+def pollardRho(n):
+    print(n)
+    g = lambda x: (x**2+1)%n
+    x = random.randint(2, n)
+    y = x
+    d = 1
+
+    loops = 0
+
+    while d == 1:
+        if loops >= 42000:
+            return 1
+        x = g(x)
+        y = g(g(y))
+        d = gcd(abs(x-y))
+        loops += 1
+    return d
+
+def pollardRho_pm1(n, b = 10):
+    b = int(b)
+    if b > primeNumbers[-1]:
+        return 1
+    m = 1
+    i = 0
+    q = primeNumbers[i]
+    while q < b:
+        print(m)
+        m *= q**int(log(b, q))
+        q = primeNumbers[i]
+        i += 1
+    g = gcd(pow(2, m, n)-1, n)
+    if g == 1:
+        return pollardRho_pm1(n, b*10)
+    if g == n:
+        return pollardRho_pm1(n, b//2)
+    return g
+
+
 def primefac(n, start=3, b=999999999999999999999999, idx=len(primeNumbers)):
     if n == 1:
         return
@@ -39,24 +78,32 @@ def primefac(n, start=3, b=999999999999999999999999, idx=len(primeNumbers)):
         raise ValueError
     if n%2 == 0:
         yield 2
-        for p in primefac(n//2, 2, b):
+        for p in primefacMemo(n//2, 2, b):
             yield p
         return
+    sq = intSqrt(n)
 
     if idx < len(primeNumbers):
         for i in range(idx, len(primeNumbers)):
             prime = primeNumbers[i]
             if n%prime == 0:
                 yield prime
-                for p in primefac(n//prime, start=prime, b=b, idx=i):
+                for p in primefacMemo(n//prime, start=prime, b=b, idx=i):
                     yield p
                 return
             if prime > b:
                 yield b*2
 
+    # d = pollardRho_pm1(n)
+    # if d != n and d != 0:
+    #     yield d
+    #     # print("solved with pollardRho")
+    #     for p in primefacMemo(n//d, start=maxPrime, b=b, idx=len(primeNumbers)):
+    #         yield p
+
     i = max(start, maxPrime)
     while True:
-        if i > intSqrt(n):
+        if i > sq:
             yield n
             return
         if i > b: #stop when reaching bsmooth limit
@@ -66,7 +113,7 @@ def primefac(n, start=3, b=999999999999999999999999, idx=len(primeNumbers)):
             yield i
             if n//i == 1:
                 return
-            for p in primefac(n//i, i, b):
+            for p in primefacMemo(n//i, i, b):
                 yield p
             return
         i += 2
@@ -74,7 +121,7 @@ def primefac(n, start=3, b=999999999999999999999999, idx=len(primeNumbers)):
 
 def bsmooth(n, b): # can this primefac be memoized without bad things happening?
     # print(n)
-    for i in primefac(n, b=b):
+    for i in primefacMemo(n, idx=0, b=b):
         # print(i)
         if i > b:
             # print(i)
@@ -140,7 +187,8 @@ def quadsieve(n):
     global primeNumbers
     primetime = time.time()
     print("reading primes from file")
-    # primeNumbers = eval(open("primes.txt", "r").read())
+    primeNumbers = eval(open("primes.txt", "r").read())
+    maxPrime = primeNumbers[-1]
     print("loaded %d primes"%len(primeNumbers))
     timeElapsed(primetime)
     fac = 1
@@ -149,7 +197,7 @@ def quadsieve(n):
         p, q = quadsieveloop(n, fac)
         if p != 1 and q != 1:
             return p, q
-        fac += .5
+        fac += .05
 
 def timeElapsed(t):
     diff = time.time()-t
@@ -165,10 +213,10 @@ def quadsieveloop(n, fac):
     for i in range(2, floor(log2(n))):
         if n % i == 0:
             return i, n//i
-    eps = .01
+    eps = 0
     x = 2*int(n**(.5+eps))
-    o = .1
-    b = int(exp((2**.5+o)*((log(x)*log(log(x)))**.5)))
+    o = .15
+    b = int(exp((2**(-.5)+o)*((log(x)*log(log(x)))**.5)))
     print("b =", b)
     t = int(fac*int(pi(b)))
     print("pi(b):", t)
@@ -181,6 +229,7 @@ def quadsieveloop(n, fac):
     smallprimes = set([])
     cong = {}
     print("finding %d bsmooth numbers"%t)
+    thousandtime = time.time()
     while count <= t:
         sq = pow(testnum, 2, n)
         if bsmooth(sq, b):
@@ -188,7 +237,12 @@ def quadsieveloop(n, fac):
             cong[sq] = testnum
             smallprimes = smallprimes.union(set(primefacMemo(sq)))
             count += 1
+            if count %100 == 0:
+                print(count, "bsmooth nums found")
+                thousandtime = timeElapsed(thousandtime)
         testnum += 1
+    print(sq)
+        
 
     print("found bsmooth numbers")
     timevar = timeElapsed(timevar)
@@ -224,17 +278,6 @@ def quadsieveloop(n, fac):
     print("done factoring loop")
     timevar = timeElapsed(timevar)
 
-    print("transposing and adding identity")
-    height = mat.cols
-    # mat = mat.transpose()
-    # mat = mat.add_identity()
-    # print(smallprimes)
-    # print(cong)
-
-    # mat = np.append(mat, np.identity(len(mat[0])), axis=0)
-
-    print("done prepping for reduction")
-    timevar = timeElapsed(timevar)
     print("doing gaussian reduction")
     pr(mat.to_array())
     congruences = mat.get_congruences()

@@ -105,29 +105,24 @@ class SparseMatrix:
 
     def reduce(self):
         assert self.rows >= self.cols
-        self.marked = []
+        self.marked = {}
         self.marks = {}
         for j in range(self.cols):
             i = self.find_pivot(j)
             if i == -1:
                 continue
-            self.marked.append(i)
+            self.marked[i] = 1 #dictionary for faster lookup
             self.marks[j] = i
             for k in range(self.cols):
                 if j != k and self.get(i, k) == 1:
                     self.add_col(j, k)
 
     def get_congruences(self):
-        valid = self.reduce()
-        if valid == -1:
-            print("Invalid matrix for reducing!")
-            return []
+        self.reduce()
         ret = []
         for i in range(self.rows):
             cong = [i]
-            if i in self.marked:
-                continue
-            if i not in self.pointsx:
+            if i in self.marked or i not in self.pointsx:
                 continue
             for y in self.pointsx[i]:
                 if self.get(i, y):
